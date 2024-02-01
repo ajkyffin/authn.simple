@@ -6,6 +6,7 @@ import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.Stateless;
@@ -50,7 +51,7 @@ public class SIMPLE_Authenticator {
 
 	@Inject
 	@ConfigProperty(name="ip")
-	private AddressChecker addressChecker;
+	private Optional<AddressChecker> addressChecker;
 
 	@Inject
 	@ConfigProperty(name="user.list")
@@ -120,9 +121,9 @@ public class SIMPLE_Authenticator {
 			throw new AuthnException(HttpURLConnection.HTTP_FORBIDDEN, "password cannot be null or empty.");
 		}
 
-		if (addressChecker != null) {
+		if (addressChecker.isPresent()) {
 			try {
-				if (!addressChecker.check(ip)) {
+				if (!addressChecker.get().check(ip)) {
 					throw new AuthnException(HttpURLConnection.HTTP_FORBIDDEN,
 							"authn.simple does not allow log in from your IP address " + ip);
 				}
