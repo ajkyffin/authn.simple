@@ -46,8 +46,8 @@ public class SIMPLE_Authenticator {
 	private Map<String, String> passwordtable;
 
 	@Inject
-	@ConfigProperty(name="mechanism", defaultValue="simple")
-	private String mechanism;
+	@ConfigProperty(name="mechanism")
+	private Optional<String> mechanism;
 
 	@Inject
 	@ConfigProperty(name="ip")
@@ -137,12 +137,12 @@ public class SIMPLE_Authenticator {
 			throw new AuthnException(HttpURLConnection.HTTP_FORBIDDEN, "The username and password do not match ");
 		}
 
-		logger.info(username + " logged in succesfully" + (mechanism != null ? " by " + mechanism : ""));
+		logger.info(username + " logged in succesfully" + mechanism.map(m -> " by " + m).orElse(""));
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try (JsonGenerator gen = Json.createGenerator(baos)) {
 			gen.writeStartObject().write("username", username);
-			if (mechanism != null) {
-				gen.write("mechanism", mechanism);
+			if (mechanism.isPresent()) {
+				gen.write("mechanism", mechanism.get());
 			}
 			gen.writeEnd();
 		}
