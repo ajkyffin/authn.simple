@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.ejb.Stateless;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
@@ -35,9 +35,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
-/* Mapped name is to avoid name clashes */
 @Path("/")
-@Stateless
+@ApplicationScoped
 public class SIMPLE_Authenticator {
 
 	private static final Logger logger = LoggerFactory.getLogger(SIMPLE_Authenticator.class);
