@@ -45,7 +45,7 @@ public class SIMPLE_Authenticator {
 	private Map<String, String> passwordtable;
 
 	@Inject
-	@ConfigProperty(name="mechanism")
+	@ConfigProperty(name="mechanism", defaultValue="simple")
 	private String mechanism;
 
 	@Inject
