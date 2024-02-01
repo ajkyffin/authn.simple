@@ -4,10 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
@@ -20,13 +22,13 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import org.icatproject.authentication.AuthnException;
 import org.icatproject.authentication.PasswordChecker;
 import org.icatproject.utils.AddressChecker;
 import org.icatproject.utils.AddressCheckerException;
-import org.icatproject.utils.CheckedProperties;
-import org.icatproject.utils.CheckedProperties.CheckedPropertyException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
@@ -41,47 +43,31 @@ public class SIMPLE_Authenticator {
 	private static final Marker fatal = MarkerFactory.getMarker("FATAL");
 
 	private Map<String, String> passwordtable;
-	private AddressChecker addressChecker;
+
+	@Inject
+	@ConfigProperty(name="mechanism")
 	private String mechanism;
+
+	@Inject
+	@ConfigProperty(name="ip")
+	private AddressChecker addressChecker;
+
+	@Inject
+	@ConfigProperty(name="user.list")
+	private List<String> users;
 
 	@PostConstruct
 	private void init() {
-		CheckedProperties props = new CheckedProperties();
-		try {
-			props.loadFromResource("run.properties");
+		// Build the passwordtable out of user.list and
+		// user.<usern>.password
+		passwordtable = new HashMap<String, String>();
 
-			// Build the passwordtable out of user.list and
-			// user.<usern>.password
-			passwordtable = new HashMap<String, String>();
-			String[] users = props.getString("user.list").split("\\s+");
-
-			String msg = "users configured [" + users.length + "]: ";
-			for (String user : users) {
-				passwordtable.put(user, props.getString("user." + user + ".password"));
-				msg = msg + user + " ";
-			}
-			logger.debug(msg);
-
-			if (props.has("ip")) {
-				String authips = props.getString("ip");
-				try {
-					addressChecker = new AddressChecker(authips);
-				} catch (Exception e) {
-					msg = "Problem creating AddressChecker with information from run.properties " + e.getMessage();
-					logger.error(fatal, msg);
-					throw new IllegalStateException(msg);
-				}
-			}
-
-			// Note that the mechanism is optional
-			if (props.has("mechanism")) {
-				mechanism = props.getString("mechanism");
-			}
-
-		} catch (CheckedPropertyException e) {
-			logger.error(fatal, e.getMessage());
-			throw new IllegalStateException(e.getMessage());
+		String msg = "users configured [" + users.size() + "]: ";
+		for (String user : users) {
+			passwordtable.put(user, ConfigProvider.getConfig().getValue("user." + user + ".password", String.class));
+			msg = msg + user + " ";
 		}
+		logger.debug(msg);
 
 		logger.debug("Initialised SIMPLE_Authenticator");
 	}
